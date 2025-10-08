@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Zeros de Funções</title>
+    <style>
+        body { font-family: sans-serif; background-color: #f4f4f9; color: #333; margin: 20px; }
+        .container { max-width: 800px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1, h2 { color: #444; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        .form-group { display: flex; flex-direction: column; }
+        label { margin-bottom: 5px; font-weight: bold; }
+        input { padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        button { background-color: #007bff; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        button:hover { background-color: #0056b3; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .full-width { grid-column: 1 / -1; }
+        #erro { color: red; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Simulador de Propagação de Erros Numéricos</h1>
+        <form id="calculo-form">
+            <div class="form-grid">
+                <div class="form-group full-width">
+                    <label for="funcao">Função f(x)</label>
+                    <input type="text" id="funcao" value="x**3 - 5*x**2 + 8*x - 4" required>
+                </div>
+                <div class="form-group">
+                    <label for="variavel">Variável</label>
+                    <input type="text" id="variavel" value="x" required>
+                </div>
+                <div class="form-group">
+                    <label for="tol">Tolerância (ex: 1e-6)</label>
+                    <input type="text" id="tol" value="1e-6" required>
+                </div>
+                 <div class="form-group">
+                    <label for="max_iter">Máx. Iterações</label>
+                    <input type="number" id="max_iter" value="1000" required>
+                </div>
+            </div>
+
+            <h2>Parâmetros por Método</h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="a">Intervalo [a]</label>
+                    <input type="number" step="any" id="a" value="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="b">Intervalo [b]</label>
+                    <input type="number" step="any" id="b" value="1.5" required>
+                </div>
+                 <div class="form-group">
+                    <label for="x0_newton">Newton x₀</label>
+                    <input type="number" step="any" id="x0_newton" value="0.5" required>
+                </div>
+                <div class="form-group">
+                    <label for="x0_secante">Secante x₀</label>
+                    <input type="number" step="any" id="x0_secante" value="0" required>
+                </div>
+                 <div class="form-group">
+                    <label for="x1_secante">Secante x₁</label>
+                    <input type="number" step="any" id="x1_secante" value="1.5" required>
+                </div>
+            </div>
+            
+            <button type="submit">Calcular</button>
+        </form>
+
+        <div id="resultados">
+            <h2>Resultados</h2>
+            <p id="erro"></p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Método</th>
+                        <th>Raiz Encontrada</th>
+                        <th>Iterações</th>
+                        <th>Tempo (ms)</th>
+                        <th>Precisão |f(raiz)|</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela-resultados">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Este script é a "ponte"
+        document.getElementById('calculo-form').addEventListener('submit', async function(event) {
+            event.preventDefault(); // Impede o recarregamento da página
+
+            // 1. Coleta os dados do formulário
+            const data = {
+                funcao: document.getElementById('funcao').value,
+                variavel: document.getElementById('variavel').value,
+                tol: document.getElementById('tol').value,
+                max_iter: document.getElementById('max_iter').value,
+                a: document.getElementById('a').value,
+                b: document.getElementById('b').value,
+                x0_newton: document.getElementById('x0_newton').value,
+                x0_secante: document.getElementById('x0_secante').value,
+                x1_secante: document.getElementById('x1_secante').value,
+            };
+
+            // 2. Envia os dados para o back-end (Flask)
+            const response = await fetch('/calcular', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            const tabelaResultados = document.getElementById('tabela-resultados');
+            const msgErro = document.getElementById('erro');
+            tabelaResultados.innerHTML = ''; // Limpa a tabela anterior
+            msgErro.textContent = '';
+
+            if (response.ok) {
+                const resultados = await response.json();
+                
+                // 3. Exibe os resultados na tabela
+                for (const metodo in resultados) {
+                    const res = resultados[metodo];
+                    const row = tabelaResultados.insertRow();
+                    row.insertCell(0).textContent = metodo;
+
+                    if (res.erro) {
+                        const cell = row.insertCell(1);
+                        cell.colSpan = 4;
+                        cell.textContent = `Falhou: ${res.erro}`;
+                    } else {
+                        row.insertCell(1).textContent = res.raiz.toFixed(10);
+                        row.insertCell(2).textContent = res.iteracoes;
+                        row.insertCell(3).textContent = res.tempo.toFixed(4);
+                        row.insertCell(4).textContent = res.precisao.toExponential(2);
+                    }
+                }
+            } else {
+                 msgErro.textContent = 'Ocorreu um erro no servidor. Verifique o console do terminal.';
+            }
+        });
+    </script>
+
+</body>
+</html>
