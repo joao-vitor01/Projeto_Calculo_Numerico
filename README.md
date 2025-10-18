@@ -40,7 +40,7 @@ Siga os passos abaixo para executar o projeto em sua máquina local.
 1.  **Clone o repositório:**
     ```bash
     git clone https://github.com/joao-vitor01/Projeto_Calculo_Numerico.git
-    cd nome-do-repositorio
+    cd Projeto_Calculo_Numerico
     ```
 
 3.  **Instale as dependências:**
