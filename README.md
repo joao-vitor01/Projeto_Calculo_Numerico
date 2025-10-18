@@ -39,7 +39,7 @@ Siga os passos abaixo para executar o projeto em sua máquina local.
 
 1.  **Clone o repositório:**
     ```bash
-    git clone [[https://github.com/seu-usuario/nome-do-repositorio.git](https://github.com/seu-usuario/nome-do-repositorio.git)](https://github.com/joao-vitor01/Projeto_Calculo_Numerico.git)
+    git clone https://github.com/joao-vitor01/Projeto_Calculo_Numerico.git
     cd nome-do-repositorio
     ```
 
