@@ -59,6 +59,7 @@ def bisseccao(f, a, b, tol, max_iter):
     iteracoes = 0
     start_time = time.time()
     if f(a) * f(b) >= 0:
+
         return {"erro": "f(a) * f(b) >= 0"}
     
     raiz = (a + b) / 2
@@ -129,6 +130,4 @@ def secante(f, x0, x1, tol, max_iter):
 
 # Inicia o servidor Flask
 if __name__ == '__main__':
-    app.run(debug=True)
-
-    
+    app.run(debug=True)    
